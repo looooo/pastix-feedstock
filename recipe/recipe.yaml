@@ -13,10 +13,8 @@ source:
   url: https://files.inria.fr/pastix/releases/v6/pastix-${{ version }}.tar.gz
   sha256: 891d426188eed56c1075fb34d2d80132593a1536ffc05cf333567f68a4811e55
   patches:
-    - patches/message.patch
     - patches/split_python.patch
-    - if: build_platform != target_platform
-      then: patches/disable_scotch_int_check.patch
+    - patches/fix_warning.patch
 
 build:
   number: 6
