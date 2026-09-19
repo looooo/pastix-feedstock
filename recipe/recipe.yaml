@@ -5,7 +5,7 @@ context:
   version: 6.4.0
   python_min: "3.10"
 
-package:
+recipe:
   name: pastix-split
   version: ${{ version }}
 
@@ -33,9 +33,9 @@ outputs:
           - "*/libcuda.so*"
       script:
         file: build_libpastix.sh
-      run_exports:
-        - ${{ pin_subpackage('libpastix', max_pin='x.x') }}
     requirements:
+      run_exports:
+        - ${{ pin_subpackage('libpastix', upper_bound='x.x') }}
       build:
         - if: unix
           then:
@@ -88,12 +88,12 @@ outputs:
         - pkg-config
       host:
         - python >=${{ python_min }}
-        - ${{ pin_subpackage('libpastix', max_pin='x.x.x') }}
+        - ${{ pin_subpackage('libpastix', upper_bound='x.x.x') }}
       run:
         - python >=${{ python_min }}
         - numpy
         - scipy
-        - ${{ pin_subpackage('libpastix', max_pin='x.x.x') }}
+        - ${{ pin_subpackage('libpastix', upper_bound='x.x.x') }}
     tests:
       - python:
           imports:
@@ -101,10 +101,10 @@ outputs:
             - spm
       - script:
           content: pip check
-          requirements:
-            run:
-              - pip
-              - python >=${{ python_min }}
+        requirements:
+          run:
+            - pip
+            - python >=${{ python_min }}
 
 about:
   homepage: https://solverstack.gitlabpages.inria.fr/pastix/
