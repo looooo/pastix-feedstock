@@ -17,9 +17,10 @@ source:
     - patches/fix_warning.patch
 
 build:
-  number: 7
+  number: 8
   skip:
     - win
+    - osx
 
 outputs:
   - package:
