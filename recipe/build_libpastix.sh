@@ -1,21 +1,30 @@
 #!/bin/bash
 set -ex
 
-# Detect SCOTCH integer size via header: typedef int64_t => 64-bit
+# Detect SCOTCH integer size via header: works also when cross-compiling
+# conda-forge scotch has int32/int64 variants (SCOTCH_Num = int vs int64_t)
 PASTIX_INT64=OFF
 if [ -f "$PREFIX/include/scotch.h" ]; then
-  if grep -q "typedef int64_t SCOTCH_Num" "$PREFIX/include/scotch.h" 2>/dev/null; then
+  echo "scotch.h SCOTCH_Num line: $(grep -E "SCOTCH_Num|SCOTCH_VERSION" "$PREFIX/include/scotch.h" | head -10)"
+  # Precise check: int64 variants use int64_t / long long / INT64
+  if grep -Eq "typedef.*(int64_t|long long|INT64).*SCOTCH_Num" "$PREFIX/include/scotch.h" 2>/dev/null; then
     PASTIX_INT64=ON
+  elif grep -Eq "typedef.*int.*SCOTCH_Num" "$PREFIX/include/scotch.h" 2>/dev/null; then
+    PASTIX_INT64=OFF
   else
-    # Fallback try compile test (native builds)
-    cat > /tmp/check_scotch.c <<'EOF'
+    echo "Could not parse SCOTCH_Num from header, trying compile test"
+    if [ "$build_platform" = "$target_platform" ]; then
+      cat > /tmp/check_scotch.c <<'EOF'
 #include <scotch.h>
 #include <stdio.h>
 int main(){ printf("%zu\n", sizeof(SCOTCH_Num)); return 0; }
 EOF
-    if $CC /tmp/check_scotch.c -I$PREFIX/include -o /tmp/check_scotch 2>/dev/null && [ -x /tmp/check_scotch ]; then
-      SZ=$(/tmp/check_scotch 2>/dev/null || echo 4)
-      if [ "$SZ" = "8" ]; then PASTIX_INT64=ON; fi
+      if $CC /tmp/check_scotch.c -I$PREFIX/include -o /tmp/check_scotch 2>/dev/null && [ -x /tmp/check_scotch ]; then
+        SZ=$(/tmp/check_scotch 2>/dev/null || echo 4)
+        if [ "$SZ" = "8" ]; then PASTIX_INT64=ON; fi
+      fi
+    else
+      echo "Cross-compiling ($build_platform -> $target_platform), skipping run-time check, keeping OFF"
     fi
   fi
 fi
